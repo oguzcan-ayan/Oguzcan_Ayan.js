@@ -55,14 +55,14 @@
     };
 
     const productCard = (product) => {
-        const favouriteItems = JSON.parse(localStorage.getItem(favouriteKey)) || [];
-        const isFavourite = favouriteItems.includes(product.id) ? 'favourited' : '';
+        const favouriteItems = JSON.parse(localStorage.getItem(favouriteKey)) || '[]';
+        const isFavourite = favouriteItems.includes(String(product.id)) ? 'favourited' : '';
         return `
-            <div class = "product-card" data-id = "${product.id}">
-                <span class = "heart ${isFavourite}">&#9825;</span>
+            <div class = "product-card" data-id = "${product.id}" data-url = "${product.url}">
                 <img class = "product-image" src = "${product.img}" alt = "${product.name}">
+                <span class = "heart ${isFavourite}">&#9829;</span>
                 <p>${product.name}</p>
-                <p class = "product-price">${product.price}</p>
+                <p class = "product-price">${product.price} TRY</p>
             </div>
         `;
     };
@@ -80,6 +80,7 @@
                 display: flex;
                 align-items: center;
                 overflow: hidden;
+                position: relative;
             }
             .slider-track{
                 display: flex;
@@ -87,41 +88,84 @@
             }
             .product-card{
                 min-width: 300px;
-                padding: 10px;
+                padding: 5px;
                 cursor: pointer;
+                position: relative;
             }
             .product-image{
                 width: 225px;
                 height: 225px;
-             
+                
             }
             .product-price{
                 font-size:20px;
                 color: blue;
             }
             .heart{
+                display: inline-block;
                 cursor: pointer;
                 color: gray;
+                position: absolute;
+                font-size: 24px;
+                z-index: 2;
+                right: 90px;
             }
             .heart.favourited{
                 color: blue;
             }
-            .slider-prev-btn, .slider-next-btn{
+            .slider-prev-btn{
                 background: none;
                 border: none;
                 font-size: 24px;
                 cursor: pointer;
                 z-index: 1;
             }
+            .slider-next-btn{
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                z-index: 1;
+                position: absolute;
+                right: 5px;
+            }
             
-            @media (max-width: 768px) {
-                .product-card{
-                    min-width: 350px;
-                    padding: 5px;
+            @media (max-width: 1024px) {
+                .product-card {
+                min-width: 225px;
                 }
-                .product-image{
-                width: 250px;
-                height: 250px;
+
+                .product-image {
+                width: 200px;
+                height: 200px;
+                }
+
+                .heart{
+                    right: 40px;
+                }
+            }
+
+            @media (max-width: 768px) {
+
+                .product-image {
+                width: 175px;
+                height: 175px;
+                }
+
+                 .heart{
+                    right: 65px;
+                }
+            }
+
+            @media (max-width: 480px) {
+
+                .product-card {
+                    min-width: 200px;
+                }
+
+                .product-image {
+                    width: 150px;
+                    height: 150px;
                 }
             }
         `;
@@ -133,25 +177,32 @@
 
     const setEvents = () => {
         document.addEventListener('click', (e) => {
+
             if (e.target.classList.contains('slider-prev-btn')) {
-                slideSlider(1);
-            } else if (e.target.classList.contains('slider-next-btn')) {
                 slideSlider(-1);
+                return;
+            } 
+            if (e.target.classList.contains('slider-next-btn')) {
+                slideSlider(1);
+                return;
             }
-        });
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.product-card')) {
-                const productId = e.target.closest('.product-card').dataset.id;
-                window.open(`/product/${productId}`, '_blank');
-            }
+    
             if (e.target.classList.contains('heart')) {
                 e.stopPropagation();
                 toggleFavouriteBtn(e.target.closest('.product-card').dataset.id, e.target);
+                return;
+            }
+    
+            const productCard = e.target.closest('.product-card');
+            if (productCard) {
+                const productUrl = productCard.dataset.url;
+                window.open(productUrl, '_blank');
             }
         });
     };
+    
 
-    let currentIndex = 0; 
+    let currentIndex = 0;
 
     const slideSlider = (direction) => {
         const track = document.querySelector('.slider-track');
@@ -161,18 +212,17 @@
 
         const productCardWidth = productCards[0].offsetWidth;
         const totalProducts = productCards.length;
-        const visibleProducts = 6; 
+        const visibleProducts = 6; // Number of products
 
         currentIndex += direction;
 
-        // Return to the beginning after the last item
-        if (currentIndex >= totalProducts) {
-            currentIndex = 0;
+
+        if (currentIndex > totalProducts - visibleProducts) {
+            currentIndex = totalProducts - visibleProducts;
         }
 
-        // When you come the last item, turn the first item
         if (currentIndex < 0) {
-            currentIndex = totalProducts - 1;
+            currentIndex = 0;
         }
 
         const newTranslateValue = -currentIndex * productCardWidth;
@@ -180,22 +230,20 @@
     };
 
 
+
     const toggleFavouriteBtn = (id, element) => {
-        let favouriteProduct = getLocalStorage(favouriteKey).map(String);
+        let favouriteProduct = JSON.parse(localStorage.getItem(favouriteKey) || '[]').map(String);
 
         if (favouriteProduct.includes(String(id))) {
-            favouriteProduct = favouriteProduct.filter(favId => favId !== String(id));
-            element.classList.remove('favourited');
+            favouriteProduct = favouriteProduct.filter(favId => favId !== String(id));       
         } else {
             favouriteProduct.push(String(id));
-            element.classList.add('favourited');
         }
         localStorage.setItem(favouriteKey, JSON.stringify(favouriteProduct));
+
+        element.classList.toggle('favourited');
     };
-
-
-    document.addEventListener("DOMContentLoaded", () => {
         init();
-    });
-
+   
+        return 'Code run successfully.';
 })();
